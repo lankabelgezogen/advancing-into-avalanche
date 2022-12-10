@@ -3,8 +3,8 @@ import { ethers } from "ethers";
 import AuctionArtifact from "./artifacts/Auction.json";
 import AuctionManagerArtifact from "./artifacts/AuctionManager.json";
 import NFTArtifact from "./artifacts/ButterflyToken.json";
-const NFT_ADDRESS = "INSERT_NFT_ADDRESS_HERE"; // NFT contract address
-const AUCTIONMANAGER_ADDRESS = "INSERT_AUCTION_MANAGER_ADDRESS_HERE"; // AuctionManager contract address
+const NFT_ADDRESS = "0xB02A3175b088807EBAdCA2d7103cbe3187c46d3A"; // NFT contract address
+const AUCTIONMANAGER_ADDRESS = "0x702122A421c6a9218c43867C2d87894FFE490291"; // AuctionManager contract address
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -28,6 +28,17 @@ class App extends React.Component {
       this.signer = this.provider.getSigner(); // Holds your private key and can sign things
       this.setState({ currentAddress: await this.signer.getAddress() }); // Set the current address
       // Step 5 - insert code here to create auction manager and NFT contract objects
+      this._auctionManager = new ethers.Contract(
+        AUCTIONMANAGER_ADDRESS,
+        AuctionManagerArtifact.abi,
+        this.signer
+      );
+     
+      this._nft = new ethers.Contract(
+        NFT_ADDRESS,
+        NFTArtifact.abi,
+        this.signer
+      );
 
       this.getItems();
       this.getAuctions();
@@ -37,6 +48,22 @@ class App extends React.Component {
   }
   async getItems() {
     // Step 6 - insert code here to get NFTs
+    const walletAddress = await this.signer.getAddress(); 
+    let tokenOwner = null; 
+    let counter = 0; 
+    const NFTIds = []; 
+    do { 
+      try { 
+        tokenOwner = await this._nft.ownerOf(counter); 
+        if (tokenOwner === walletAddress) { 
+          NFTIds.push(counter); 
+        } 
+        counter++; 
+      } catch (error) { 
+        tokenOwner = null;  } 
+ 
+} while (tokenOwner != null); 
+this.setState({ myItems: NFTIds });
   }
   async createAuction() {
     if (
@@ -50,13 +77,83 @@ class App extends React.Component {
       return alert("Fill all the fields");
     }
     // Step 7 - insert code here to create an auction
+    let { hash: allowance_hash } = await this._nft.approve( 
+      AUCTIONMANAGER_ADDRESS, 
+      this.state.newAuction.tokenId 
+     );  
+    console.log("Approve Transaction sent! Hash:", allowance_hash); 
+    await this.provider.waitForTransaction(allowance_hash);  console.log("Transaction mined!"); 
+     
+    let { hash } = await this._auctionManager.createAuction( 
+      this.state.newAuction.endTime * 60,  
+      ethers.utils.parseEther(this.state.newAuction.minIncrement.toString()),  
+      ethers.utils.parseEther(this.state.newAuction.directBuyPrice.toString()),  
+      ethers.utils.parseEther(this.state.newAuction.startPrice.toString()),     
+      NFT_ADDRESS,  
+      this.state.newAuction.tokenId  
+    ); 
+    console.log("Transaction sent! Hash:", hash); 
+    await this.provider.waitForTransaction(hash);   
+    console.log("Transaction mined!"); 
+    alert(`Transaction sent! Hash: ${hash}`);
   }
   async getAuctions() {
-    // Step 8 - insert code here to get auctions
+    let auctionsAddresses = await this._auctionManager.getAuctions();  
+    let auctions = await this._auctionManager.getAuctionInfo(auctionsAddresses);  
+  
+    let new_auctions = []; 
+ 
+    for (let i = 0; i < auctions.endTime.length; i++) { 
+ 	    let endTime = auctions.endTime[i].toNumber(); 
+ 	    let tokenId = auctions.tokenIds[i].toNumber(); 
+ 	    let auctionState = auctions.auctionState[i].toNumber(); 
+  
+ 	    let startPrice = ethers.utils.formatEther(auctions.startPrice[i]); 
+ 	    let directBuyPrice = ethers.utils.formatEther(auctions.directBuy[i]); 
+ 	    let highestBid = ethers.utils.formatEther(auctions.highestBid[i]); 
+  
+ 	    let owner = auctions.owner[i]; 
+  
+ 	    let newAuction = { 
+  	    endTime: endTime, 
+  	    startPrice: startPrice, 
+  	    owner: owner, 
+  	    directBuyPrice: directBuyPrice, 
+  	    tokenId: tokenId, 
+  	    highestBid: highestBid, 
+  	    auctionState: auctionState, 
+  	    auctionAddress: auctionsAddresses[i], 
+ 	    }; 
+ 	    new_auctions.push(newAuction); 
+	  } 
+    this.setState({ auctions: new_auctions }); // Update the state
   }
   async setActiveAuction(auction, _this) {
     // Step 5 - insert code here to create auction contract object
+    _this._auction = new ethers.Contract( 
+      auction.auctionAddress, 
+      AuctionArtifact.abi, 
+      _this.signer 
+    );
     // Step 10 - insert code here to set an active auction
+    let previousBids = await _this._auction.allBids(); // Get the bids
+    let bids = []; // A list of bids
+    for (let i = 0; i < previousBids[0].length; i++) {
+ // Loop through the bids
+      bids.push({
+  // Add the bid to the list
+      bidder: previousBids[0][i], // The bidder
+      bid: ethers.utils.formatEther(previousBids[1][i]), // The bid
+      });
+    }
+ 
+    auction.bids = bids;
+    let highestBidder = await _this._auction.maxBidder();
+    auction.highestBidder = highestBidder;
+ 
+    let minIncrement = await _this._auction.minIncrement();
+    auction.minIncrement = ethers.utils.formatEther(minIncrement);
+    _this.setState({ activeAuction: auction }); // Update the state
   }
   renderAuctionElement(auction, _this) {
     let state = "";
@@ -220,21 +317,33 @@ class App extends React.Component {
     if (!amount) return;
     amount = ethers.utils.parseEther(amount.toString()); // Amount in AVAX
     // Step 11 - insert code here to place a bid
+    let { hash } = await this._auction.placeBid({ value: amount });  
+    await this.provider.waitForTransaction(hash);  
+    alert(`Transaction sent! Hash: ${hash}`); // Show the transaction hash
     this.setActiveAuction(this.state.activeAuction, this);
   }
 
   async withdrawToken() {
     // Step 12 - insert code here to withdraw the NFT
+    let { hash } = await this._auction.withdrawToken();
+    await this.provider.waitForTransaction(hash);
+    alert(`Withdrawal Successful! Hash: ${hash}`);
     window.location.reload(); // Reload the page
   }
 
   async withdrawFunds() {
     // Step 13 - insert code here to withdraw funds
+    let { hash } = await this._auction.withdrawFunds();
+    await this.provider.waitForTransaction(hash);
+    alert(`Withdrawal Successful! Hash: ${hash}`);
     window.location.reload(); // Reload the page
   }
 
   async cancelAuction() {
     // Step 14 - insert code here to cancel the auction
+    let { hash } = await this._auction.cancelAuction(); 
+    await this.provider.waitForTransaction(hash);  
+    alert(`Auction Canceled! Hash: ${hash}`);
     window.location.reload(); // Reload the page
   }
 
