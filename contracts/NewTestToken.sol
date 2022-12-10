@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 contract NewTestToken is ERC20, ERC20Burnable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor() ERC20("NewTestToken", "SU") {
+    constructor() ERC20("LanKabelGezogen", "SU") {
         _mint(msg.sender, 123456789 * 10 ** decimals());
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);

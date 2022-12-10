@@ -76,10 +76,10 @@ export default {
       forking: forkingData,
     },
     local: {
-      url: "insert-rpc-url-here",
+      url: "https://9656-stackupdev-advancingint-ovxvbcfe3fj.ws-eu77.gitpod.io/ext/bc/2TAhKh7qSpabEri8o113RkhBL48sA4J54v9Zp1GLJHE6cKJaNd/rpc",
       gasPrice: 225000000000,
       chainId: 777,
-      accounts: ["insert-private-key-here"],
+      accounts: ["56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"],
     },
     fuji: {
       url: "https://api.avax-test.network/ext/bc/C/rpc",
