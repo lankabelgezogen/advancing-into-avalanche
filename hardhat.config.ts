@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomiclabs/hardhat-ethers";
 
-const RECOVERY_PHRASE = "INSERT_YOUR_PRIVATE_KEY_HERE";
+const RECOVERY_PHRASE = "require blossom upset moon owner tell swamp box erode real face mandate trial calm year barrel that child celery because victory short upset rack";
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();

@@ -11,5 +11,10 @@ contract ButterflyToken is ERC721URIStorage {
         tokenCounter = 0;
     }
 
-    function mint(string memory _tokenUri) public payable {}
+    function mint(string memory _tokenUri) public payable {
+        require(tokenCounter < MAX_TOKENS, "ERC721: Max supply");
+        _safeMint(msg.sender, tokenCounter); 
+        _setTokenURI(tokenCounter, _tokenUri); 
+        tokenCounter = tokenCounter + 1;
+    }
 }
