@@ -102,12 +102,13 @@ contract Auction {
     // Withdraw the token after the auction is over
     function withdrawToken() external returns (bool) {
         // 1) The auction must be ended by either a direct buy or timeout
-
+        require(getAuctionState() == AuctionState.ENDED || getAuctionState() == AuctionState.DIRECT_BUY);
         // 2) The highest bidder can only withdraw the token
-
+        require(msg.sender == maxBidder);
         // 3) Transfer the token to the highest bidder
-
+        _nft.transferFrom(address(this), maxBidder, tokenId);
         // 4) Emit a withdraw token event
+        emit WithdrawToken(maxBidder);
     }
 
     // Withdraw the funds after the auction is over
@@ -124,29 +125,30 @@ contract Auction {
     // Cancel the auction
     function cancelAuction() external returns (bool) {
         // 1) Only the auction creator can cancel the auction
-
+        require(msg.sender == creator);
         // 2) The auction must be open
-
+        require(getAuctionState() == AuctionState.OPEN);
         // 3) The auction must not be cancelled if there is a bid
-
+        require(maxBid == 0);
         // 4) Set auction to cancelled state to true
-
+        isCancelled = true; 
         // 5) Transfer the NFT token to the auction creator
-
+        _nft.transferFrom(address(this), creator, tokenId);
         // 6) Emit Auction Cancelled event
-
+        emit AuctionCancelled();
         return true;
     }
 
     // Get the auction state
     function getAuctionState() public view returns (AuctionState) {
         // 1) If the auction is cancelled return CANCELLED
-
+        if(isCancelled) return AuctionState.CANCELLED;
         // 2) If the auction is ended by a direct buy return DIRECT_BUY
-
+        if(isDirectBuy) return AuctionState.DIRECT_BUY;
         // 3) The auction is over if the block timestamp is greater than the end timestamp, return ENDED
-        
+        if(block.timestamp >= endTime) return AuctionState.ENDED;
         // 4) Otherwise return OPEN
+        return AuctionState.OPEN;
     }
 
     event NewBid(address bidder, uint bid); // A new bid was placed

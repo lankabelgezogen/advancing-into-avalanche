@@ -22,17 +22,17 @@ contract AuctionManager {
         require(_endTime > 5 minutes); // end time must be greater than 5 minutes (setting it to 5 minutes for testing you can set it to 1 days or anything you would like)
 
         // 1) get the current value of the counter
-
+        uint auctionId = _auctionIdCounter;
         // 2) increment the counter
-
+        _auctionIdCounter++;
         // 3) create the auction
-
+        Auction auction = new Auction(msg.sender, _endTime, _minIncrement, _directBuyPrice, _startPrice, _nftAddress, _tokenId);
         // 4) get the nft token
-
+        IERC721 _nftToken = IERC721(_nftAddress);  
         // 5) transfer the token to the auction
-
+        _nftToken.transferFrom(msg.sender, address(auction), _tokenId);  
         // 6) add the auction to the map
-
+        auctions[auctionId] = auction;
         return true;
     }
 
