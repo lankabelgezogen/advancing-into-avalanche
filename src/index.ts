@@ -22,14 +22,14 @@ const xchain: AVMAPI = avalanche.XChain();
 type KeyInfo = { address: string; publicKey: string; privateKey: string };
 
 const senderKeys: KeyInfo = {
-  address: "insert-sender-address",
-  publicKey: "insert-sender-publicKey",
-  privateKey: "insert-sender-pivateKey",
+  address: "X-fuji1k7xx8wz907xrzggkksp5r2dyr5drd3nluhxggy",
+  publicKey: "72VdG5i9aPDqrKJpvpRnSEHLNAjuAfkc6wsJGBgaeechUZygpy",
+  privateKey: "PrivateKey-2B6BSpbXvw94Ec4Pinck3X46wARsFcp4xZKpwvJwwDgr3hUNWG",
 };
-const assetID = "insert-assetID"; // the transaction ID is used as asset ID
-const friendsAddress = "insert-receiver-address"; // address format is Bech32
+const assetID = "2sKgjXHeXGcZpzLB9Vf4ew5KoReJzFQ2WDCXLYKP4Pg8K87AE"; // the transaction ID is used as asset ID
+const friendsAddress = "X-fuji1n9cdggdhdrggf78h8hp4dya7paq7yfuax2ny5z"; // address format is Bech32
 // ============ Main Part of Script ===================
-const step: number = 0; // Values can be 0, 6, 10, 11
+const step: number = 11; // Values can be 0, 6, 10, 11
 switch (step) {
   case 6:
     console.log("Running Step 6 Code");
@@ -87,8 +87,8 @@ async function createAsset(): Promise<void> {
     "AVM utility method buildCreateAssetTx to create an ANT"
   );
 
-  const name: string = "insert-stackup-username";
-  const symbol: string = "insert-symbol";
+  const name: string = "LanKabelGezogen";
+  const symbol: string = "SU";
   const denomination: number = 3;
 
   const avmUTXOResponse: GetUTXOsResponse = await xchain.getUTXOs(
